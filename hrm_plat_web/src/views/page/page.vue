@@ -106,18 +106,18 @@
 	export default {
 		data() {
 			return {
-                formVisible:false,//对话框默认不显示,只有点击添加或修改的时候显示
-                listLoading:false,
+				formVisible:false,//对话框默认不显示,只有点击添加或修改的时候显示
+				listLoading:false,
 				//查询对象
 				filters:{
 					keyword:''
 				},
 				page:1,//当前页,要传递到后台的
 				total:0, //分页总数
-			    pagers:[], //当前页数据
+				pagers:[], //当前页数据
 				//初始值
-                pager:{
-                    id:null,
+				pager:{
+					id:null,
 					name:'',
 					alias:'',
 					type:'',
@@ -126,62 +126,62 @@
 					site:null,
 				},
 				employees:[],
-                formRules: {
-                    name: [
-                        { required: true, message: '请输入名称!', trigger: 'blur' }
-                    ]
-                }
+				formRules: {
+					name: [
+						{ required: true, message: '请输入名称!', trigger: 'blur' }
+					]
+				}
 			}
 		},
 		methods: {
-            handleSuccess(response, file, fileList){
-                console.log("===========")
-                console.log(response);
-                console.log(file);
-                console.log(fileList);
-                this.pager.templateUrl = response;
-            },
-            handleRemove(file, fileList) {
-                console.log(file, fileList);
-            },
-            handlePreview(file) {
-                console.log(file);
-            },
+			handleSuccess(response, file, fileList){
+				console.log("===========")
+				console.log(response);
+				console.log(file);
+				console.log(fileList);
+				this.pager.templateUrl = response;
+			},
+			handleRemove(file, fileList) {
+				console.log(file, fileList);
+			},
+			handlePreview(file) {
+				console.log(file);
+			},
 			add(){
 				//清空数据
 				this.pager={
-                    id:null,
-                    name:'',
-                    alias:'',
-                    type:'',
-                    templateUrl:'',
-                    physicalPath:'',
-                    site:{},
+					id:null,
+					name:'',
+					alias:'',
+					type:'',
+					templateUrl:'',
+					physicalPath:'',
+					site:{},
 				}
 				//打开dialog
 				this.formVisible =true;
 				this.getEmployees();
 			},
-            stateFormatter(row, column, cellValue, index){
+			stateFormatter(row, column, cellValue, index){
 
-                if(cellValue===0){
-                    return "正常";
+				if(cellValue===0){
+					return "正常";
 				}else{
-                    return "停用";
+					return "停用";
 				}
 			},
-            handleCurrentChange(curentPage){
-                this.page = curentPage;
-                this.getPagers();
+			handleCurrentChange(curentPage){
+				this.page = curentPage;
+				this.getPagers();
 			},
-		    save(){
-                this.$refs.pager.validate((valid) => {
-                    //校验表单成功后才做一下操作
-                    if (valid) {
-                        this.$confirm('确认提交吗？', '提示', {}).then(() => {
-                            //拷贝后面对象的值到新对象,防止后面代码改动引起模型变化
-                            let para = Object.assign({}, this.pager);
-                            //判断是否有id有就是修改,否则就是添加
+			save(){
+				this.$refs.pager.validate((valid) => {
+					//校验表单成功后才做一下操作
+					if (valid) {
+						this.$confirm('确认提交吗？', '提示', {}).then(() => {
+							//拷贝后面对象的值到新对象,防止后面代码改动引起模型变化
+							let para = Object.assign({}, this.pager);
+							//判断是否有id有就是修改,否则就是添加
 							this.$http.post("/page/pager/save",para).then((res) => {
 								this.$message({
 									message: '操作成功!',
@@ -194,72 +194,72 @@
 								//刷新数据
 								this.getPagers();
 							});
-                        });
-                    }
-                })
+						});
+					}
+				})
 			},
-            edit(row){
-                //回显
-                let pagerTmp = Object.assign({}, row); //解决对话框改值后列表会被改值.
-                this.pager = pagerTmp; //里面本来就有id,相当于回显了id
+			edit(row){
+				//回显
+				let pagerTmp = Object.assign({}, row); //解决对话框改值后列表会被改值.
+				this.pager = pagerTmp; //里面本来就有id,相当于回显了id
 				//显示
-                this.formVisible =true;
+				this.formVisible =true;
 			},
-			  getEmployees(){
-                //发送请求到后台获取数据
-                  this.$http.patch("/employee") //$.Post(.....)
-                      .then(result=>{
-                          this.employees = result.data;
-                      });
-			  }
-		    ,
-            getPagers(){
-                //发送Ajax请求后台获取数据  axios
+			getEmployees(){
+				//发送请求到后台获取数据
+				this.$http.patch("/employee") //$.Post(.....)
+						.then(result=>{
+							this.employees = result.data;
+						});
+			}
+			,
+			getPagers(){
+				//发送Ajax请求后台获取数据  axios
 				//添加分页条件及高级查询条件
 				let para = {
-				    "page":this.page,
+					"page":this.page,
 					"keyword":this.filters.keyword
 				};
 				this.listLoading = true; //显示加载圈
 				//分页查询
-                this.$http.post("/page/pager/json",para) //$.Post(.....)
-                    .then(result=>{
-                        this.total = result.data.total;
-                        this.pagers = result.data.rows;
-                        this.listLoading = false;  //关闭加载圈
-                    });
+				this.$http.post("/page/pager/json",para) //$.Post(.....)
+						.then(result=>{
+							this.total = result.data.total;
+							this.pagers = result.data.rows;
+							this.listLoading = false;  //关闭加载圈
+						});
 			},
 			del(row){
-                console.log(row);
-                this.$confirm('确认删除该记录吗?', '提示', {
-                    type: 'warning'
-                }).then(() => {
-                    var id = row.id;
-                    this.listLoading = true;
-                    this.$http.delete("/pager/"+id)
-                        .then(result=>{
-                            this.listLoading = false;
-                            //做提示
-                            if(result.data.success){
-                                this.$message({
-                                    message: '删除成功',
-                                    type: 'success'
-                                });
-							}else{
-                                this.$message({
-                                    message: result.data.message,
-                                    type: 'error'
-                                });
-							}
-							//刷新数据
-                            this.getPagers();
-                        })
+				console.log(row);
+				this.$confirm('确认删除该记录吗?', '提示', {
+					type: 'warning'
+				}).then(() => {
+					var id = row.id;
+					this.listLoading = true;
+					this.$http.delete("/pager/"+id)
+							.then(result=>{
+								this.listLoading = false;
+								//做提示
+								if(result.data.success){
+									this.$message({
+										message: '删除成功',
+										type: 'success'
+									});
+								}else{
+									this.$message({
+										message: result.data.message,
+										type: 'error'
+									});
+								}
+								//刷新数据
+								this.getPagers();
+							})
 				});
 
 			}
 		},
 		mounted() {
-		    this.getPagers()
+			this.getPagers()
 		}
 	}
 

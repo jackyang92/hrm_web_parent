@@ -66,27 +66,27 @@
 								<!-- 手机注册 start -->
 								<form id="MobileRegisterModel" class="form-horizontal" name="MobileRegisterModel" action="/register/mobile.html" method="post">
 									<input type="hidden" name="_csrf" value="alJHek5GNGsyKi9NCj5/Ej8aGCV9E109PApyPX8XYRFSFgA1IAkMHA==">
+									<input id="codeUuid" type="hidden" v-model="codeUuid">
 									<!-- 手机号 -->
 									<div class="form-group form-group-spe">
 										<label for="mobileregistermodel-mobile" class="input-left">
-<span class="spark">*</span>
-<span>手机号：</span>
-</label>
+											<span class="spark">*</span>
+											<span>手机号：</span>
+										</label>
 										<div class="form-control-box">
 
 											<input type="text" id="mobileregistermodel-mobile" class="form-control" name="MobileRegisterModel[mobile]">
 
 										</div>
-
 										<div class="invalid"></div>
 									</div>
 									<input style="display: none">
 									<!-- 密码 -->
 									<div class="form-group form-group-spe">
 										<label for="mobileregistermodel-password" class="input-left">
-<span class="spark">*</span>
-<span>密码：</span>
-</label>
+												<span class="spark">*</span>
+												<span>密码：</span>
+										</label>
 										<div class="form-control-box">
 
 											<input type="password" id="password" class="form-control" name="MobileRegisterModel[password]" value="" autocomplete="off">
@@ -100,9 +100,8 @@
 
 									<div class="form-group form-group-spe">
 										<label for="mobileregistermodel-captcha" class="input-left">
-
-<span>验证码：</span>
-</label>
+											<span>验证码：</span>
+											</label>
 										<div class="form-control-box">
 
 											<input type="text" id="captcha" class="input-small" name="MobileRegisterModel[captcha]">
@@ -125,7 +124,7 @@
 
 											<input type="text" id="mobileregistermodel-sms_captcha" class="input-small" name="MobileRegisterModel[sms_captcha]">
 
-											<a href="javascript:void(0);" class="phonecode">获取短信校验码</a>
+											<a href="javascript:void(0);" @click="sendSmsCode" class="phonecode">获取短信校验码</a>
 
 										</div>
 
@@ -195,7 +194,7 @@
 					$().ready(function() {
 						var validator = $("#MobileRegisterModel").validate();
 						// 验证规则，此验证规则会影响编辑器中JavaScript的的格式化操作
-						$.validator.addRules($("#client_rules").html());
+						//$.validator.addRules($("#client_rules").html());
 						$("#btn_submit").click(function() {
 							if(!validator.form()) {
 								return;
@@ -205,83 +204,6 @@
 
 							return false;
 						});
-
-						// 获取验证码链接点击事件
-						$(".phonecode").click(function() {
-							if(!$("#mobileregistermodel-mobile").valid()) {
-								$("#mobileregistermodel-mobile").focus();
-								return;
-							}
-							if(!$("#password").valid()) {
-								$("#password").focus();
-								return;
-							}
-
-							if(!$("#captcha").valid()) {
-								$("#captcha").focus();
-								return;
-							}
-
-							if($(this).prop("disabled") == true || $(this).data("doing") == true) {
-								return;
-							}
-
-							if($(this).data("doing")) {
-								return;
-							}
-
-							$(this).data("doing", true);
-
-							// 获取短信验证码
-							var target = this;
-
-							var mobile = $("#mobileregistermodel-mobile").val();
-							var captcha = $("#captcha").val();
-							$.post('/register/sms-captcha', {
-								mobile: mobile,
-								captcha: captcha
-							}, function(result) {
-								if(result.code == 0) {
-									// 开始倒计时
-									countdown(target, "获取短信验证码");
-								} else {
-									if(result.code == 1) {
-										$.validator.showError($("#mobileregistermodel-sms_captcha"), result.message);
-									} else {
-										$.msg(result.message, {
-											time: 5000
-										});
-									}
-									// 失败后点击验证码
-									if($("#captcha-image").size() > 0) {
-										$("#captcha").val("");
-										$("#captcha-image").click();
-									}
-								}
-								$(target).data("doing", false);
-							}, "json");
-						});
-						var wait = 60;
-
-						function countdown(obj, msg) {
-							obj = $(obj);
-
-							if(wait <= 0) {
-								obj.prop("disabled", false);
-								obj.html(msg);
-								wait = 60;
-							} else {
-								if(msg == undefined || msg == null) {
-									msg = obj.html();
-								}
-								obj.prop("disabled", true);
-								obj.html(wait + "秒后重新获取");
-								wait--;
-								setTimeout(function() {
-									countdown(obj, msg)
-								}, 1000)
-							}
-						}
 					});
 				</script>
 				<script type="text/javascript">
@@ -625,7 +547,8 @@
                     "codeUuid":'',
 					"validateCode":'',
 					"imgPrefix":"data:image/png;base64,",
-					"base64Code":''
+					"base64Code":'',
+					"wait":60
                 }
             },
             methods:{
@@ -640,7 +563,7 @@
                         uuid = this.uuid();
                         localStorage.setItem("codeUuid",uuid);
 					}
-
+					this.codeUuid = uuid;
 					//2 获取验证码
 					this.$http.get("/user/imgCode?uuid="+uuid)
 						.then(result=>{
@@ -655,6 +578,78 @@
 							v = c == 'x' ? r : (r & 0x3 | 0x8);
 						return v.toString(16);
 					});
+				},
+				sendSmsCode(event){ //只有vue事件绑定才能调用vue的方法
+				    let el = event.currentTarget;
+                    if(!$("#mobileregistermodel-mobile").valid()) {
+                        $("#mobileregistermodel-mobile").focus();
+                        return;
+                    }
+                    if(!$("#password").valid()) {
+                        $("#password").focus();
+                        return;
+                    }
+
+                    if(!$("#captcha").valid()) {
+                        $("#captcha").focus();
+                        return;
+                    }
+
+                    if($(el).prop("disabled") == true || $(el).data("doing") == true) {
+                        return;
+                    }
+
+                    if($(el).data("doing")) {
+                        return;
+                    }
+
+                    $(el).data("doing", true);
+
+                    // 获取短信验证码
+                    var target = el; //vue对象
+                    var mobile = $("#mobileregistermodel-mobile").val();
+                    var captcha = $("#captcha").val();
+                    var codeUuid = $("#codeUuid").val();
+                    var params = {
+                        mobile: mobile,
+                        captcha: captcha,
+                        codeUuid: codeUuid
+                    };
+                    var _this = this; //vue对象
+                    this.$http.post('/user/register/sendSmsCode',params).then(result=>{
+                        if(result.data.success) {
+                            // 开始倒计时
+                            _this.countdown(target, "获取短信验证码");
+                        } else {
+
+                            $.validator.showError($("#mobileregistermodel-sms_captcha"), result.data.message);
+                            // 失败后点击验证码
+                            if($("#captcha-image").size() > 0) {
+                                $("#captcha").val("");
+                                $("#captcha-image").click();
+                            }
+                        }
+                        $(target).data("doing", false);
+                    });
+				},
+				countdown(obj, msg) {
+					obj = $(obj);
+					var _this = this;
+					if(this.wait <= 0) {
+						obj.prop("disabled", false);
+						obj.html(msg);
+                        this.wait = 60;
+					} else {
+						if(msg == undefined || msg == null) {
+							msg = obj.html();
+						}
+						obj.prop("disabled", true);
+						obj.html(this.wait + "秒后重新获取");
+                        this.wait--;
+						setTimeout(function() {
+                            _this.countdown(obj, msg)
+						}, 1000)
+					}
 				}
            },
             mounted(){
